@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { STORIES, type Testament } from "@/data/stories";
 
 type Tab = "home" | "stories" | "questions" | "preachers" | "membership";
 
@@ -14,45 +15,6 @@ const bibleLink = (ref: string) =>
   `https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}`;
 const youtubeLink = (q: string) =>
   `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
-
-const STORIES = [
-  {
-    title: "Creation: God Speaks the World Into Being",
-    testament: "Old Testament",
-    ref: "Genesis 1:1-2:3",
-    story:
-      "In the beginning God created the heavens and the earth. Day by day He spoke light, sky, land, plants, sun, moon, stars, sea creatures, animals and finally humanity into existence, and on the seventh day He rested.",
-    lesson: "God is the Creator who makes everything good and gives life purpose.",
-    watch: "Creation Genesis 1 Bible story",
-  },
-  {
-    title: "Noah's Ark: Faith in a Flood",
-    testament: "Old Testament",
-    ref: "Genesis 6:9-9:17",
-    story:
-      "Noah walked faithfully with God in a corrupt world. Following God's instructions, he built an ark, and God preserved Noah's family and the animals through the flood and made a covenant never again to destroy the earth by water.",
-    lesson: "Obedience and faith in God's word bring deliverance, and God keeps His promises.",
-    watch: "Noah's Ark Bible story",
-  },
-  {
-    title: "David and Goliath: Trusting the Lord",
-    testament: "Old Testament",
-    ref: "1 Samuel 17:1-51",
-    story:
-      "The young shepherd David faced the giant Goliath, not with armour, but in the name of the LORD Almighty. Victory belonged to the Lord, who saves not by sword or spear.",
-    lesson: "Our battles are won by trusting God, not by our own strength.",
-    watch: "David and Goliath Bible story",
-  },
-  {
-    title: "The Resurrection: Christ Is Risen",
-    testament: "New Testament",
-    ref: "Luke 24:1-12",
-    story:
-      "Early on the first day of the week, the women went to the tomb and found it empty. The angels said, \"He is not here; he has risen!\" Jesus conquered death, and the Gospel was born.",
-    lesson: "Because Jesus rose from the dead, sin and death are defeated and believers have living hope.",
-    watch: "Resurrection of Jesus Bible movie",
-  },
-];
 
 const QUESTIONS = [
   {
@@ -114,12 +76,30 @@ const Button = ({ href, children, primary = false }: { href: string; children: R
   </a>
 );
 
+type TestamentFilter = "all" | Testament;
+
 export default function Index() {
   const [tab, setTab] = useState<Tab>("home");
-  const [openStory, setOpenStory] = useState<number | null>(null);
+  const [openStory, setOpenStory] = useState<string | null>(null);
+  const [storyQuery, setStoryQuery] = useState("");
+  const [storyTestament, setStoryTestament] = useState<TestamentFilter>("all");
   const [openQ, setOpenQ] = useState<number | null>(null);
 
-  const featured = STORIES[0];
+  const featured = STORIES.find((s) => s.id === "creation") ?? STORIES[0];
+
+  const filteredStories = useMemo(() => {
+    const q = storyQuery.trim().toLowerCase();
+    return STORIES.filter((s) => {
+      if (storyTestament !== "all" && s.testament !== storyTestament) return false;
+      if (!q) return true;
+      return (
+        s.title.toLowerCase().includes(q) ||
+        s.book.toLowerCase().includes(q) ||
+        s.ref.toLowerCase().includes(q) ||
+        s.story.toLowerCase().includes(q)
+      );
+    });
+  }, [storyQuery, storyTestament]);
 
   return (
     <div className="min-h-screen bg-[#faf7f0] text-[#0b1d3a]">
@@ -194,12 +174,48 @@ export default function Index() {
         {tab === "stories" && (
           <section className="space-y-4">
             <h1 className="text-2xl font-bold">Bible Stories</h1>
-            <p className="text-sm text-[#0b1d3a]/70">Starter collection: 4 stories. More stories will be added over time.</p>
-            {STORIES.map((s, i) => (
-              <Card key={s.title}>
-                <p className="text-xs text-[#9a7b12]">{s.testament} · {s.ref}</p>
+            <p className="text-sm text-[#0b1d3a]/70">
+              Stories from Genesis to Revelation. {STORIES.length} stories are available so far, and more will be added over time.
+            </p>
+
+            <input
+              type="search"
+              value={storyQuery}
+              onChange={(e) => setStoryQuery(e.target.value)}
+              placeholder="Search by character, book, passage or topic"
+              className="w-full rounded-full border border-[#c9a227]/50 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#c9a227]"
+              aria-label="Search Bible stories"
+            />
+
+            <div className="flex flex-wrap gap-2">
+              {(["all", "Old Testament", "New Testament"] as TestamentFilter[]).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setStoryTestament(f)}
+                  className={`rounded-full px-4 py-1.5 text-sm transition ${
+                    storyTestament === f
+                      ? "bg-[#0b1d3a] font-semibold text-white"
+                      : "border border-[#0b1d3a]/30 bg-white text-[#0b1d3a]"
+                  }`}
+                >
+                  {f === "all" ? "All" : f}
+                </button>
+              ))}
+            </div>
+
+            <p className="text-xs text-[#0b1d3a]/60">Showing {filteredStories.length} of {STORIES.length} stories</p>
+
+            {filteredStories.length === 0 && (
+              <Card>
+                <p className="text-sm">No stories match your search. Try a different name, book or topic.</p>
+              </Card>
+            )}
+
+            {filteredStories.map((s) => (
+              <Card key={s.id}>
+                <p className="text-xs text-[#9a7b12]">{s.testament} · {s.book} · {s.ref}</p>
                 <h2 className="mt-1 text-lg font-bold">{s.title}</h2>
-                {openStory === i ? (
+                {openStory === s.id ? (
                   <div className="mt-3 space-y-3 text-sm leading-relaxed">
                     <p><span className="font-semibold">Short story: </span>{s.story}</p>
                     <p><span className="font-semibold">Key lesson: </span>{s.lesson}</p>
@@ -211,7 +227,7 @@ export default function Index() {
                     <button onClick={() => setOpenStory(null)} className="text-sm font-semibold underline">Close</button>
                   </div>
                 ) : (
-                  <button onClick={() => setOpenStory(i)} className="mt-3 text-sm font-semibold text-[#9a7b12] underline">
+                  <button onClick={() => setOpenStory(s.id)} className="mt-3 text-sm font-semibold text-[#9a7b12] underline">
                     Open story
                   </button>
                 )}
