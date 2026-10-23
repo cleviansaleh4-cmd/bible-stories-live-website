@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
 import { STORIES, type Testament } from "@/data/stories";
+import { QUESTIONS_PART1 } from "@/data/questions-part1";
+import { QUESTIONS_PART2 } from "@/data/questions-part2";
+
+const ALL_QUESTIONS = [...QUESTIONS_PART1, ...QUESTIONS_PART2];
+const QUESTION_CATEGORIES = Array.from(new Set(ALL_QUESTIONS.map((q) => q.category)));
 
 type Tab = "home" | "stories" | "questions" | "preachers" | "membership";
 
@@ -83,9 +88,23 @@ export default function Index() {
   const [openStory, setOpenStory] = useState<string | null>(null);
   const [storyQuery, setStoryQuery] = useState("");
   const [storyTestament, setStoryTestament] = useState<TestamentFilter>("all");
-  const [openQ, setOpenQ] = useState<number | null>(null);
+  const [openQ, setOpenQ] = useState<string | null>(null);
+  const [qSearch, setQSearch] = useState("");
+  const [qCat, setQCat] = useState<string>("all");
 
   const featured = STORIES.find((s) => s.id === "creation") ?? STORIES[0];
+
+  const filteredQuestions = useMemo(() => {
+    const q = qSearch.trim().toLowerCase();
+    return ALL_QUESTIONS.filter((item) => {
+      if (qCat !== "all" && item.category !== qCat) return false;
+      if (!q) return true;
+      return [item.question, item.answer, item.passages, item.category]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [qSearch, qCat]);
 
   const filteredStories = useMemo(() => {
     const q = storyQuery.trim().toLowerCase();
@@ -241,21 +260,61 @@ export default function Index() {
           <section className="space-y-4">
             <h1 className="text-2xl font-bold">Hard Questions</h1>
             <p className="text-sm text-[#0b1d3a]/70">
-              Examine Scripture for yourself. Starter collection: 3 answered questions.
+              Examine Scripture for yourself. {ALL_QUESTIONS.length} answered questions so far.
             </p>
-            {QUESTIONS.map((q, i) => (
-              <Card key={q.q}>
+            <input
+              type="search"
+              value={qSearch}
+              onChange={(e) => setQSearch(e.target.value)}
+              placeholder="Search questions, passages or topics"
+              className="w-full rounded-xl border border-[#c9a227]/40 bg-white px-4 py-3 text-sm outline-none focus:border-[#0b1d3a]"
+            />
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              <button
+                onClick={() => setQCat("all")}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${qCat === "all" ? "bg-[#0b1d3a] text-white" : "border border-[#0b1d3a]/30"}`}
+              >
+                All
+              </button>
+              {QUESTION_CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setQCat(c)}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${qCat === c ? "bg-[#0b1d3a] text-white" : "border border-[#0b1d3a]/30"}`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+            {filteredQuestions.length === 0 && (
+              <p className="text-sm">No questions match your search. Try another word.</p>
+            )}
+            {filteredQuestions.map((q) => (
+              <Card key={q.id}>
                 <p className="text-xs text-[#9a7b12]">{q.category}</p>
-                <h2 className="mt-1 text-lg font-bold">{q.q}</h2>
-                {openQ === i ? (
+                <h2 className="mt-1 text-lg font-bold">{q.question}</h2>
+                {openQ === q.id ? (
                   <div className="mt-3 space-y-3 text-sm leading-relaxed">
-                    <p>{q.a}</p>
-                    <p><span className="font-semibold">Key passages: </span>{q.refs}</p>
+                    <p><span className="font-semibold">Answer: </span>{q.answer}</p>
+                    <p><span className="font-semibold">Biblical context: </span>{q.context}</p>
+                    <p><span className="font-semibold">Key passages: </span>{q.passages}</p>
+                    {q.interpretations && (
+                      <p><span className="font-semibold">Different Christian views: </span>{q.interpretations}</p>
+                    )}
                     <p><span className="font-semibold">Common misunderstanding: </span>{q.misunderstanding}</p>
+                    <p><span className="font-semibold">Practical application: </span>{q.application}</p>
+                    <div>
+                      <p className="font-semibold">Discussion questions:</p>
+                      <ul className="ml-5 list-disc">
+                        {q.followUp.map((f) => (
+                          <li key={f}>{f}</li>
+                        ))}
+                      </ul>
+                    </div>
                     <button onClick={() => setOpenQ(null)} className="text-sm font-semibold underline">Close</button>
                   </div>
                 ) : (
-                  <button onClick={() => setOpenQ(i)} className="mt-3 text-sm font-semibold text-[#9a7b12] underline">
+                  <button onClick={() => setOpenQ(q.id)} className="mt-3 text-sm font-semibold text-[#9a7b12] underline">
                     Read answer
                   </button>
                 )}
