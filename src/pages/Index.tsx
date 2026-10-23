@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { STORIES, type Testament } from "@/data/stories";
 import { QUESTIONS_PART1 } from "@/data/questions-part1";
 import { QUESTIONS_PART2 } from "@/data/questions-part2";
+import { SermonLibrary } from "@/components/preachers/SermonLibrary";
 
 const ALL_QUESTIONS = [...QUESTIONS_PART1, ...QUESTIONS_PART2];
 const QUESTION_CATEGORIES = Array.from(new Set(ALL_QUESTIONS.map((q) => q.category)));
@@ -324,23 +325,7 @@ export default function Index() {
         )}
 
         {/* FOR PREACHERS */}
-        {tab === "preachers" && (
-          <section className="space-y-4">
-            <h1 className="text-2xl font-bold">For Preachers</h1>
-            <p className="text-sm text-[#0b1d3a]/70">Teaching resources you can read aloud and adapt for your church.</p>
-            {RESOURCES.map((r) => (
-              <Card key={r.title}>
-                <p className="text-xs text-[#9a7b12]">{r.type} · {r.theme}</p>
-                <h2 className="mt-1 text-lg font-bold">{r.title}</h2>
-                <p className="mt-1 text-sm">Main text: <span className="font-semibold">{r.text}</span></p>
-                <div className="mt-3">
-                  <Button href={bibleLink(r.text)}>Open Scripture</Button>
-                </div>
-              </Card>
-            ))}
-            <p className="text-xs text-[#0b1d3a]/60">Full manuscripts, search, bookmarks and PDF export are coming in the next version.</p>
-          </section>
-        )}
+        {tab === "preachers" && <SermonLibrary />}
 
         {/* MEMBERSHIP */}
         {tab === "membership" && (

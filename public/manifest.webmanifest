@@ -1,0 +1,12 @@
+{
+  "name": "Bible Stories Live - Global Gospel Mission",
+  "short_name": "Bible Stories Live",
+  "description": "Learn Bible stories, examine hard questions with Scripture, and prepare biblical messages.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf7f0",
+  "theme_color": "#0b1d3a",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
