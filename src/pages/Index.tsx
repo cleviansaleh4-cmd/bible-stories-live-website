@@ -6,11 +6,15 @@ import { SermonLibrary } from "@/components/preachers/SermonLibrary";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { BookmarkButton } from "@/components/preachers/BookmarkButton";
 import { useBookmarks } from "@/hooks/useBookmarks";
+import { SavedItems } from "@/components/SavedItems";
+import { MembershipForm } from "@/components/membership/MembershipForm";
+import { DEVOTIONALS } from "@/data/devotionals";
+import { SERMONS } from "@/data/sermons";
 
 const ALL_QUESTIONS = [...QUESTIONS_PART1, ...QUESTIONS_PART2];
 const QUESTION_CATEGORIES = Array.from(new Set(ALL_QUESTIONS.map((q) => q.category)));
 
-type Tab = "home" | "stories" | "questions" | "preachers" | "membership" | "search";
+type Tab = "home" | "stories" | "questions" | "preachers" | "membership" | "search" | "saved";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "home", label: "Home" },
@@ -20,51 +24,12 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "membership", label: "Membership" },
 ];
 
+const SAVED_TAB = { id: "saved" as Tab, label: "Saved" };
+
 const bibleLink = (ref: string) =>
   `https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}`;
 const youtubeLink = (q: string) =>
   `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
-
-const QUESTIONS = [
-  {
-    category: "The cross, forgiveness, and grace",
-    q: "Does God forgive sin without the cross?",
-    a: "Scripture ties forgiveness to the death of Christ. Hebrews 9:22 says, \"without the shedding of blood there is no forgiveness.\" Romans 3:25 presents Jesus as the one whom God put forward as a sacrifice of atonement. Forgiveness is available through God's grace, and it rests on the work of Christ.",
-    refs: "Hebrews 9:22; Romans 3:23-26; Ephesians 1:7",
-    misunderstanding: "God simply overlooks sin because He is loving. Scripture shows God is both just and the justifier of those who trust Jesus.",
-  },
-  {
-    category: "Money, giving, and prosperity",
-    q: "Is tithing compulsory for Christians today?",
-    a: "Tithing was a requirement under the Mosaic Law for Israel. The New Testament does not command Christians to tithe. It teaches cheerful, generous, planned giving from the heart. Christians should give generously and support their church and those in need, but giving is not a payment to buy God's favour.",
-    refs: "Malachi 3:10; Galatians 3:24-25; 2 Corinthians 9:7; 1 Corinthians 16:2",
-    misunderstanding: "Believers differ in how they apply Old Testament giving principles. Some see tithing as a helpful guide, while others see it as fulfilled in Christ. Both groups agree that generosity matters.",
-  },
-  {
-    category: "Prophecy and spiritual gifts",
-    q: "How can we test a prophecy biblically?",
-    a: "Scripture commands believers to test prophecy. Deuteronomy 18:21-22 says a prophet who speaks in the Lord's name and whose words do not come true has not spoken for the Lord. 1 Thessalonians 5:20-21 says, \"Do not treat prophecies with contempt... Test them all; hold on to what is good.\" A message must also agree with Scripture and honour Christ.",
-    refs: "Deuteronomy 18:21-22; 1 Thessalonians 5:20-21; 1 John 4:1",
-    misunderstanding: "Every sincere-sounding message is from God. Scripture tells us to examine every message, including those from popular preachers.",
-  },
-];
-
-const RESOURCES = [
-  { title: "The Gospel in Genesis to Revelation", type: "30-minute sermon", text: "John 3:16", theme: "Repentance and salvation" },
-  { title: "Faith That Obeys", type: "15-minute teaching", text: "James 2:14-26", theme: "Faith and obedience" },
-  { title: "Holy Spirit Who Helps Us", type: "45-minute study", text: "John 14:15-27", theme: "Holy Spirit teachings" },
-  { title: "Hope in the Middle of Suffering", type: "Devotional", text: "Romans 5:3-5", theme: "Suffering, perseverance, and hope" },
-];
-
-const DEVOTIONAL = {
-  verseRef: "Psalm 119:105",
-  verse: "Your word is a lamp for my feet, a light on my path.",
-  devotional:
-    "Scripture guides us one step at a time. We do not need to see the whole road to walk faithfully today.",
-  question: "Which part of God's Word do I need to read carefully today?",
-  action: "Read one passage slowly and write down one thing it teaches about God.",
-  prayer: "Lord, make Your Word a lamp to my feet. Help me walk in it today.",
-};
 
 const WHATSAPP = "https://wa.me/254746648097";
 
@@ -100,6 +65,7 @@ export default function Index() {
   const { isBookmarked, toggleBookmark, count: savedCount } = useBookmarks();
 
   const featured = STORIES.find((s) => s.id === "creation") ?? STORIES[0];
+  const todays = DEVOTIONALS[new Date().getDay() % DEVOTIONALS.length];
 
   const filteredQuestions = useMemo(() => {
     const q = qSearch.trim().toLowerCase();
@@ -148,7 +114,7 @@ export default function Index() {
             className="hidden min-w-0 flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder:text-white/60 outline-none focus:bg-white/20 md:block md:max-w-sm"
           />
           <nav className="hidden gap-1 md:flex">
-            {TABS.map((t) => (
+            {[...TABS, SAVED_TAB].map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
@@ -199,18 +165,20 @@ export default function Index() {
 
             <Card className="bg-[#0b1d3a] text-white">
               <p className="text-xs font-semibold uppercase tracking-wide text-[#e8d28a]">Daily Scripture</p>
-              <p className="mt-2 text-lg italic">"{DEVOTIONAL.verse}"</p>
-              <p className="mt-1 text-sm text-[#e8d28a]">{DEVOTIONAL.verseRef}</p>
-              <p className="mt-4 text-sm text-white/90">{DEVOTIONAL.devotional}</p>
-              <p className="mt-3 text-sm"><span className="font-semibold text-[#e8d28a]">Prayer: </span>{DEVOTIONAL.prayer}</p>
+              <p className="mt-2 text-lg italic">"{todays.verse}"</p>
+              <p className="mt-1 text-sm text-[#e8d28a]">{todays.verseRef}</p>
+              <p className="mt-4 text-sm text-white/90">{todays.devotional}</p>
+              <p className="mt-3 text-sm"><span className="font-semibold text-[#e8d28a]">Reflection: </span>{todays.reflection}</p>
+              <p className="mt-2 text-sm"><span className="font-semibold text-[#e8d28a]">Action today: </span>{todays.action}</p>
+              <p className="mt-2 text-sm"><span className="font-semibold text-[#e8d28a]">Prayer: </span>{todays.prayer}</p>
             </Card>
 
             <div>
               <h2 className="mb-3 text-lg font-bold">Recently added resources</h2>
               <div className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2">
-                {RESOURCES.map((r) => (
-                  <Card key={r.title} className="min-w-[260px] snap-start">
-                    <p className="text-xs text-[#9a7b12]">{r.type}</p>
+                {SERMONS.slice(0, 8).map((r) => (
+                  <Card key={r.id} className="min-w-[260px] snap-start">
+                    <p className="text-xs text-[#9a7b12]">{r.duration} · {r.format}</p>
                     <h3 className="mt-1 font-bold">{r.title}</h3>
                     <p className="mt-1 text-sm text-[#0b1d3a]/70">{r.theme}</p>
                   </Card>
@@ -411,13 +379,38 @@ export default function Index() {
                 <Button href={WHATSAPP} primary>More Information on WhatsApp</Button>
               </div>
             </Card>
+            <Card>
+              <h2 className="text-lg font-bold">Register your interest</h2>
+              <p className="mt-1 text-sm text-[#0b1d3a]/70">Leave your details to be informed about new teaching. No payment is requested.</p>
+              <div className="mt-4">
+                <MembershipForm />
+              </div>
+            </Card>
           </section>
+        )}
+
+        {/* SAVED */}
+        {tab === "saved" && (
+          <SavedItems
+            onOpenStory={(id) => {
+              setOpenStory(id);
+              setTab("stories");
+            }}
+            onOpenQuestion={(id) => {
+              setOpenQ(id);
+              setTab("questions");
+            }}
+            onOpenSermon={(id) => {
+              setFocusSermon(id);
+              setTab("preachers");
+            }}
+          />
         )}
       </main>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-[#c9a227]/40 bg-[#0b1d3a] md:hidden">
-        {TABS.map((t) => (
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-6 border-t border-[#c9a227]/40 bg-[#0b1d3a] md:hidden">
+        {[...TABS, SAVED_TAB].map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}

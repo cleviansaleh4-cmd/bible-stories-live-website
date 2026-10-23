@@ -51,5 +51,5 @@ export function useBookmarks() {
     });
   }, []);
 
-  return { isBookmarked, toggleBookmark, count: keys.length };
+  return { keys, isBookmarked, toggleBookmark, count: keys.length };
 }
