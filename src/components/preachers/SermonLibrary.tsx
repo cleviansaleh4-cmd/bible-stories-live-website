@@ -48,11 +48,11 @@ const printSermon = (s: Sermon) => {
   w.print();
 };
 
-export const SermonLibrary = () => {
+export const SermonLibrary = ({ focusId = null }: { focusId?: string | null }) => {
   const [query, setQuery] = useState("");
   const [duration, setDuration] = useState<(typeof DURATIONS)[number]>("all");
   const [onlySaved, setOnlySaved] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(focusId);
   const { isBookmarked, toggleBookmark, count } = useBookmarks();
 
   const results = useMemo(() => {

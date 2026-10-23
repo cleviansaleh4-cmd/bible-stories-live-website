@@ -3,11 +3,14 @@ import { STORIES, type Testament } from "@/data/stories";
 import { QUESTIONS_PART1 } from "@/data/questions-part1";
 import { QUESTIONS_PART2 } from "@/data/questions-part2";
 import { SermonLibrary } from "@/components/preachers/SermonLibrary";
+import { GlobalSearch } from "@/components/GlobalSearch";
+import { BookmarkButton } from "@/components/preachers/BookmarkButton";
+import { useBookmarks } from "@/hooks/useBookmarks";
 
 const ALL_QUESTIONS = [...QUESTIONS_PART1, ...QUESTIONS_PART2];
 const QUESTION_CATEGORIES = Array.from(new Set(ALL_QUESTIONS.map((q) => q.category)));
 
-type Tab = "home" | "stories" | "questions" | "preachers" | "membership";
+type Tab = "home" | "stories" | "questions" | "preachers" | "membership" | "search";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "home", label: "Home" },
@@ -92,6 +95,9 @@ export default function Index() {
   const [openQ, setOpenQ] = useState<string | null>(null);
   const [qSearch, setQSearch] = useState("");
   const [qCat, setQCat] = useState<string>("all");
+  const [globalQuery, setGlobalQuery] = useState("");
+  const [focusSermon, setFocusSermon] = useState<string | null>(null);
+  const { isBookmarked, toggleBookmark, count: savedCount } = useBookmarks();
 
   const featured = STORIES.find((s) => s.id === "creation") ?? STORIES[0];
 
@@ -126,10 +132,21 @@ export default function Index() {
       {/* Header + desktop navigation */}
       <header className="sticky top-0 z-20 bg-[#0b1d3a] text-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <div>
+          <div className="shrink-0">
             <p className="text-base font-bold leading-tight sm:text-lg">Bible Stories Live</p>
             <p className="text-xs text-[#e8d28a]">Global Gospel Mission</p>
           </div>
+          <input
+            type="search"
+            value={globalQuery}
+            onChange={(e) => {
+              setGlobalQuery(e.target.value);
+              if (e.target.value.trim()) setTab("search");
+            }}
+            placeholder="Search stories, questions, sermons"
+            aria-label="Search the whole site"
+            className="hidden min-w-0 flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder:text-white/60 outline-none focus:bg-white/20 md:block md:max-w-sm"
+          />
           <nav className="hidden gap-1 md:flex">
             {TABS.map((t) => (
               <button
@@ -147,6 +164,19 @@ export default function Index() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 pb-28 pt-6 md:pb-12">
+        <div className="mb-4 md:hidden">
+          <input
+            type="search"
+            value={globalQuery}
+            onChange={(e) => {
+              setGlobalQuery(e.target.value);
+              if (e.target.value.trim()) setTab("search");
+            }}
+            placeholder="Search stories, questions, sermons"
+            aria-label="Search the whole site on mobile"
+            className="w-full rounded-full border border-[#c9a227]/50 bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#c9a227]"
+          />
+        </div>
         {/* HOME */}
         {tab === "home" && (
           <section className="space-y-6">
@@ -233,8 +263,17 @@ export default function Index() {
 
             {filteredStories.map((s) => (
               <Card key={s.id}>
-                <p className="text-xs text-[#9a7b12]">{s.testament} · {s.book} · {s.ref}</p>
-                <h2 className="mt-1 text-lg font-bold">{s.title}</h2>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-[#9a7b12]">{s.testament} · {s.book} · {s.ref}</p>
+                    <h2 className="mt-1 text-lg font-bold">{s.title}</h2>
+                  </div>
+                  <BookmarkButton
+                    label={s.title}
+                    saved={isBookmarked({ kind: "story", id: s.id })}
+                    onToggle={() => toggleBookmark({ kind: "story", id: s.id })}
+                  />
+                </div>
                 {openStory === s.id ? (
                   <div className="mt-3 space-y-3 text-sm leading-relaxed">
                     <p><span className="font-semibold">Short story: </span>{s.story}</p>
@@ -292,8 +331,17 @@ export default function Index() {
             )}
             {filteredQuestions.map((q) => (
               <Card key={q.id}>
-                <p className="text-xs text-[#9a7b12]">{q.category}</p>
-                <h2 className="mt-1 text-lg font-bold">{q.question}</h2>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-[#9a7b12]">{q.category}</p>
+                    <h2 className="mt-1 text-lg font-bold">{q.question}</h2>
+                  </div>
+                  <BookmarkButton
+                    label={q.question}
+                    saved={isBookmarked({ kind: "question", id: q.id })}
+                    onToggle={() => toggleBookmark({ kind: "question", id: q.id })}
+                  />
+                </div>
                 {openQ === q.id ? (
                   <div className="mt-3 space-y-3 text-sm leading-relaxed">
                     <p><span className="font-semibold">Answer: </span>{q.answer}</p>
@@ -325,7 +373,30 @@ export default function Index() {
         )}
 
         {/* FOR PREACHERS */}
-        {tab === "preachers" && <SermonLibrary />}
+        {tab === "preachers" && <SermonLibrary focusId={focusSermon} />}
+
+        {/* SEARCH RESULTS */}
+        {tab === "search" && (
+          <GlobalSearch
+            query={globalQuery}
+            onOpenStory={(id) => {
+              setOpenStory(id);
+              setStoryQuery("");
+              setStoryTestament("all");
+              setTab("stories");
+            }}
+            onOpenQuestion={(id) => {
+              setOpenQ(id);
+              setQSearch("");
+              setQCat("all");
+              setTab("questions");
+            }}
+            onOpenSermon={(id) => {
+              setFocusSermon(id);
+              setTab("preachers");
+            }}
+          />
+        )}
 
         {/* MEMBERSHIP */}
         {tab === "membership" && (
